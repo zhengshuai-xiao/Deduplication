@@ -1,0 +1,4 @@
+0.install cmake(>=3.5.1)
+1.install protocol buffer
+2.install grpc to specific path ($MY_INSTALL_DIR)
+3. cmake -DCMAKE_CXX_STANDARD=17       -DCMAKE_INSTALL_PREFIX=$MY_INSTALL_DIR -DBUILD_SHARED_LIBS=ON ../..
