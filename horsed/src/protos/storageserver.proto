@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package storageserver;
+
+// The greeting service definition.
+service Storage {
+  // Sends a greeting
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+  // Send meta data
+  rpc FileOpen (FileMetaDataRequest) returns (FileMetaDataReply) {}
+  // Send data
+  rpc FileWrite (FileWriteRequest) returns (FileWriteReply) {}
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings
+message HelloReply {
+  string message = 1;
+}
+
+//Send data
+
+message FileMetaDataRequest {
+    uint64 id = 1;
+    string fullpath = 2;
+    string timestamp =3;
+}
+
+message FileMetaDataReply {
+    uint64 id = 1;
+    string fullpath = 2;
+    string error = 3;
+}
+
+message FileWriteRequest {
+    uint64 id = 1; 
+    string fullPath = 2;
+    uint64 offset = 3;
+    uint64 len = 4;
+    bytes payload = 5;
+}
+message FileWriteReply {
+    uint64 id = 1;
+    string fullPath = 2;
+    string error = 3;
+}

@@ -19,8 +19,6 @@
 
 cmake_minimum_required(VERSION 3.5.1)
 
-project(HelloWorld C CXX)
-
 include(./cmake/common.cmake)
 
 # Proto file
@@ -46,12 +44,12 @@ add_custom_command(
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # hw_grpc_proto
-add_library(hw_grpc_proto
+add_library(hw_grpc_proto_greet
   ${hw_grpc_srcs}
   ${hw_grpc_hdrs}
   ${hw_proto_srcs}
   ${hw_proto_hdrs})
-target_link_libraries(hw_grpc_proto
+target_link_libraries(hw_grpc_proto_greet
   ${_REFLECTION}
   ${_GRPC_GRPCPP}
   ${_PROTOBUF_LIBPROTOBUF})
@@ -63,7 +61,7 @@ foreach(_target
   greeter_async_client greeter_async_client2 greeter_async_server)
   add_executable(${_target} "${_target}.cc")
   target_link_libraries(${_target}
-    hw_grpc_proto
+    hw_grpc_proto_greet
     ${_REFLECTION}
     ${_GRPC_GRPCPP}
     ${_PROTOBUF_LIBPROTOBUF})

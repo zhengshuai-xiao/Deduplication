@@ -73,7 +73,7 @@ private:
 #define LOG_ERROR()   common::Logger::LogStream(common::LogLevel::ERROR, std::this_thread::get_id(), __FUNCTION__)
 #define LOG_FATAL()   common::Logger::LogStream(common::LogLevel::FATAL, std::this_thread::get_id(), __FUNCTION__)
 
-#define FUNC_TRACE() FuncLog logfunc(__FUNCTION__)
+#define FUNC_TRACE() common::FuncLog logfunc(__FUNCTION__)
     class FuncLog{
     public:
         FuncLog(std::string str):str_(str){

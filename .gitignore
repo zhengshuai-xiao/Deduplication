@@ -1,0 +1,12 @@
+cmake/
+build/
+bin/
+obj/
+CMakeFiles/
+*.o
+*.out
+*.exe
+
+.idea/
+.vscode/
+*.sublime-*
