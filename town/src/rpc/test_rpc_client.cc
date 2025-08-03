@@ -69,6 +69,34 @@ public:
         return "RPC failed";
         }
     }
+    int FileOpen(){
+        FileOpenRequest request;
+        request.set_file(file);
+        FileOpenReply reply;
+        ClientContext context;
+        Status status = stub_->FileOpen(&context, request, &reply);
+        if (status.ok()) {
+            std::cout << "FileOpen succeeded: " << reply.message() << std::endl;
+            return reply.file_descriptor();
+        } else {
+            std::cout << "FileOpen failed: " << status.error_message() << std::endl;
+            return -1;
+        }
+    }
+    int FileWrite(string file, char* data, size_t size){
+        FileWriteRequest request;
+        request.set_data("Hello, World!");
+
+        FileWriteReply reply;
+        ClientContext context;
+
+        Status status = stub_->FileWrite(&context, request, &reply);
+        if (status.ok()) {
+            std::cout << "FileWrite succeeded: " << reply.message() << std::endl;
+        } else {
+            std::cout << "FileWrite failed: " << status.error_message() << std::endl;
+        }
+    }
 
  private:
   std::unique_ptr<Storage::Stub> stub_;
