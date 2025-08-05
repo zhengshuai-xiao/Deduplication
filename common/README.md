@@ -1,31 +1,41 @@
-Components:
+# Components
 
-logging
-    1.async logging
-    2.blocking logging
-    usage:
-        asyncLogging{
+## logging
+
+1.async logging
+
+```
+usage:
+asyncLogging{
             common::Logger::Instance().setLogFile("/var/log/dedup/echo_server.log", true);
             common::Logger::Instance().setLevel(common::LogLevel::TRACE);
             ...
             LOG_ERROR() << "msg" << arg;
             common::Logger::Instance().stop();//stop logging thread
         }
-        
-        blockingLogging{
+```
+
+2.blocking logging
+
+```
+ usage:
+    blockingLogging{
             common::Logger::Instance().setLogFile("/var/log/dedup/calc.log", false);
             common::Logger::Instance().setLevel(common::LogLevel::TRACE);
             ...
-            LOG_ERROR() << "msg" << arg;
+            LOG_ERROR() << "msg" << arg;        }
+```
 
-        }
+## configration
 
-configration
-    1.configuration set/get
+1.configuration set/get
 
-fileOps
-    1.file open/write/read/close
-    
-buffer
-    1.cache large data
-    2.
+## fileOps
+
+1.file open/write/read/close
+
+## buffer
+
+1.cache large data
+
+2.

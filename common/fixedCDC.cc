@@ -2,16 +2,16 @@
 
 #include "FixedCDC.h"
 
-void FixedCDC::calc_chunks(
-  const bufferlist& bl,
-  std::vector<std::pair<uint64_t, uint64_t>> *chunks) const
+int FixedCDC::calc_chunks(
+  const char* const data,
+  const size_t size,
+  uint64_t &chunk_offset) const
 {
-  size_t len = bl.length();
-  if (!len) {
-    return;
+  if (size==0) {
+    return -1;
   }
-  for (size_t pos = 0; pos < len; pos += chunk_size) {
-    chunks->push_back(std::pair<uint64_t,uint64_t>(pos, std::min(chunk_size,
-								 len - pos)));
-  }
+
+  chunk_offset = min(size, chunk_size);
+  
+  return chunk_offset==size? -1:0;
 }

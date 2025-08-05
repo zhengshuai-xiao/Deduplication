@@ -10,10 +10,13 @@ class CDC {
 public:
   virtual ~CDC() = default;
 
-  /// calculate chunk boundaries as vector of (offset, length) pairs
-  virtual void calc_chunks(
-    const bufferlist& inputdata,
-    std::vector<std::pair<uint64_t, uint64_t>> *chunks) const = 0;
+  /* calculate chunk boundaries
+     0: did not hit the buffer boundary
+     -1: hit the buffer boundary
+  */
+  int calc_chunks(const char* const data,
+  const size_t size,
+  uint64_t &chunk_offset) const = 0;
 
   /// set target chunk size as a power of 2, and number of bits for hard min/max
   virtual void set_target_bits(int bits, int windowbits = 2) = 0;

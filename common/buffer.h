@@ -11,7 +11,7 @@ public:
         if (data_ == nullptr) {
             throw std::bad_alloc();
         }
-        std::memset(data_, 0, size_);
+        if(size>0)std::memset(data_, 0, size_);
     }
 
     virtual ~Buffer() {
