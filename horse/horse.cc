@@ -26,6 +26,9 @@ struct readBuf{
     char* data(){
         return &buf[offset];
     }
+    size_t remaining() const {
+        return size - offset;
+    }
 };
 bool read_file_to_buffer_queue(const std::string& file_path, BufferQueue<SegBuffer>& buffer_queue) {
     std::ifstream file(file_path, std::ios::binary);
@@ -41,6 +44,8 @@ bool read_file_to_buffer_queue(const std::string& file_path, BufferQueue<SegBuff
 
     while (true) {
 
+        read_buffer.reset();
+        
         file.read(read_buffer.data(), BUF_SIZE);
         std::streamsize bytes_read = file.gcount();
         read_buffer.size = bytes_read;
@@ -49,32 +54,36 @@ bool read_file_to_buffer_queue(const std::string& file_path, BufferQueue<SegBuff
         }
 
         std::unique_ptr<CDC> cdc = CDC::create("fixed", 17);
-        while(true){
-            uint64_t chunk_offset = 0;
-            if(cdc->calc_chunks(read_buffer.data(), static_cast<size_t>(bytes_read), chunk_offset) == -1){
+        bool finish_cut = false;
+        while(!finish_cut){
+            uint64_t chunk_size = 0;
+            if(cdc->calc_chunks(read_buffer.data(), read_buffer.remaining(), chunk_size) == -1){
                 LOG_INFO() << "hit boundary";
-                break;
+                if(chunk_size == 0){
+                    break;
+                }
+                finish_cut = true;
             }
 
-            std::unique_ptr<SegBuffer> pbuffer = std::make_unique<SegBuffer>(static_cast<size_t>(chunk_offset-read_buffer.offset));
-            pbuffer->write(read_buffer.data(), chunk_offset-read_buffer.offset);
+            std::unique_ptr<SegBuffer> pbuffer = std::make_unique<SegBuffer>(static_cast<size_t>(chunk_size));
+            pbuffer->write(read_buffer.data(), chunk_size);
             buffer_queue.enqueue(std::move(pbuffer));
 
-            read_buffer.offset=chunk_offset;
+            read_buffer.offset += chunk_size;
             chunks_read++;
         }
         
         total_read += static_cast<size_t>(bytes_read);
         
         if (chunks_read % 10 == 0) {
-            LOG_INFO() << "read: " << chunks_read << " chunks, total is " << total_read / 1024 << " KB" ;
+            LOG_INFO() << "read: " << chunks_read << " chunks, total is " << total_read / 1024.0 << " KB" ;
         }
     }
     finished.store(true);
     //finish
     buffer_queue.enqueue(std::make_unique<SegBuffer>(0));
 
-    LOG_INFO() << "read finished. Total " << chunks_read << " chunks, " << total_read / 1024 << " KB";
+    LOG_INFO() << "read finished. Total " << chunks_read << " chunks, " << total_read / 1024.0 << " KB";
     LOG_INFO() << "buffer queue currently contains " << buffer_queue.size() << " chunks" ;
     
     return true;
@@ -83,7 +92,7 @@ bool read_file_to_buffer_queue(const std::string& file_path, BufferQueue<SegBuff
 void display_queue_info(const BufferQueue<SegBuffer>& buffer_queue) {
     LOG_INFO() << "queue info:" ;
     LOG_INFO() << "chunks: " << buffer_queue.size() ;
-    LOG_INFO() << "total size: " << buffer_queue.total_size() / 1024 << " KB" ;
+    LOG_INFO() << "total size: " << buffer_queue.total_size() / 1024.0 << " KB" ;
 }
 
 int main(int argc, char* argv[]) {
