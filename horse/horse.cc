@@ -1,34 +1,36 @@
-#include "segBuffer.h"
-#include "bufferQue.h"
+#include "common/segBuffer.h"
+#include "common/bufferQue.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <cstddef>
-#include "FixedCDC.h"
+#include "common/fixedCDC.h"
 #include <atomic>
 #include <thread>
+#include "include/rpc_client.h"
+#include "include/common.h"
 std::atomic<bool> finished=false;
 
 const size_t BUF_SIZE = 2 * 1024 * 1024;  // 2M
 struct readBuf{
-    std::array<char, BUF_SIZE> data;
+    std::array<char, BUF_SIZE> buf;
     size_t offset;
     size_t size;
     readBuf(){
         reset();
     }
-    reset(){
+    void reset(){
         offset = 0;
         size = 0;
     }
     char* data(){
-        return data.data()+offset;
+        return &buf[offset];
     }
 };
 bool read_file_to_buffer_queue(const std::string& file_path, BufferQueue<SegBuffer>& buffer_queue) {
     std::ifstream file(file_path, std::ios::binary);
     if (!file.is_open()) {
-        std::cerr << "cannot open file: " << file_path << std::endl;
+        LOG_ERROR() << "cannot open file: " << file_path ;
         return false;
     }
     //TODO:ring buffer
@@ -50,13 +52,13 @@ bool read_file_to_buffer_queue(const std::string& file_path, BufferQueue<SegBuff
         while(true){
             uint64_t chunk_offset = 0;
             if(cdc->calc_chunks(read_buffer.data(), static_cast<size_t>(bytes_read), chunk_offset) == -1){
-                std::cout<< "hit boundary"<<std::endl;
+                LOG_INFO() << "hit boundary";
                 break;
             }
-            
-            SegBuffer buffer(static_cast<size_t>(chunk_offset-read_buffer.offset));
-            buffer.write(read_buffer.data(), chunk_offset-read_buffer.offset);
-            buffer_queue.enqueue(std::move(buffer));
+
+            std::unique_ptr<SegBuffer> pbuffer = std::make_unique<SegBuffer>(static_cast<size_t>(chunk_offset-read_buffer.offset));
+            pbuffer->write(read_buffer.data(), chunk_offset-read_buffer.offset);
+            buffer_queue.enqueue(std::move(pbuffer));
 
             read_buffer.offset=chunk_offset;
             chunks_read++;
@@ -65,42 +67,50 @@ bool read_file_to_buffer_queue(const std::string& file_path, BufferQueue<SegBuff
         total_read += static_cast<size_t>(bytes_read);
         
         if (chunks_read % 10 == 0) {
-            std::cout << "read: " << chunks_read << " chunks, total is " << total_read / 1024 << " KB" << std::endl;
+            LOG_INFO() << "read: " << chunks_read << " chunks, total is " << total_read / 1024 << " KB" ;
         }
     }
     finished.store(true);
     //finish
-    buffer_queue.enqueue(SegBuffer(0));
+    buffer_queue.enqueue(std::make_unique<SegBuffer>(0));
 
-    std::cout << "read finished. Total " << chunks_read << " chunks, " << total_read / 1024 << " KB" << std::endl;
-    std::cout << "buffer queue currently contains " << buffer_queue.size() << " chunks" << std::endl;
+    LOG_INFO() << "read finished. Total " << chunks_read << " chunks, " << total_read / 1024 << " KB";
+    LOG_INFO() << "buffer queue currently contains " << buffer_queue.size() << " chunks" ;
     
     return true;
 }
 
 void display_queue_info(const BufferQueue<SegBuffer>& buffer_queue) {
-    std::cout << "queue info:" << std::endl;
-    std::cout << "chunks: " << buffer_queue.size() << std::endl;
-    std::cout << "total size: " << buffer_queue.total_size() / 1024 << " KB" << std::endl;
+    LOG_INFO() << "queue info:" ;
+    LOG_INFO() << "chunks: " << buffer_queue.size() ;
+    LOG_INFO() << "total size: " << buffer_queue.total_size() / 1024 << " KB" ;
 }
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
-        std::cerr << "usage: " << argv[0] << " <file_path>" << std::endl;
+        LOG_ERROR() << "usage: " << argv[0] << " <file_path>" ;
         return 1;
     }
+
+    const std::string target_str = "localhost:50051";
 
     std::string file_path = argv[1];
     BufferQueue<SegBuffer> buffer_queue;
 
     //TODO: create another thread to send the segment to server
-    std::thread sender_thread([&buffer_queue]() {
+    std::thread sender_thread([&buffer_queue, target_str]() {
+        const std::string file_path = "/xzs.data";
+        StorageClient client(
+            grpc::CreateChannel(target_str, grpc::InsecureChannelCredentials()));
+        client.FileOpen(file_path,0);
         while (!finished.load() || buffer_queue.size() > 0) {
-            SegBuffer buffer;
-            if (buffer_queue.dequeue(buffer)) {
-                // Send buffer to server
+            std::unique_ptr<SegBuffer> bufferPtr = buffer_queue.dequeue();
+            if (bufferPtr->size() > 0) {
+                // TODO:Send buffer to server
+                client.FileWrite(file_path,bufferPtr->data(),bufferPtr->size());
             }
         }
+        client.FileClose(file_path);
     });
 
     try {
@@ -113,7 +123,7 @@ int main(int argc, char* argv[]) {
         sender_thread.join();
     }
     catch (const std::exception& e) {
-        std::cerr << "error happened: " << e.what() << std::endl;
+        LOG_ERROR() << "error happened: " << e.what() ;
         return 1;
     }
 

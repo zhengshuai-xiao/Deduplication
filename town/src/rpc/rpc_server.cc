@@ -6,7 +6,7 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 
-#include "storageserver.grpc.pb.h"
+#include "include/storageserver.grpc.pb.h"
 #include "include/common.h"
 
 using grpc::CallbackServerContext;
@@ -44,6 +44,7 @@ class StorageServiceImpl final : public Storage::CallbackService {
     FUNC_TRACE();
     reply->set_id(request->id());
     reply->set_fullpath(request->fullpath());
+    LOG_INFO() << "FileOpen: " << request->id() << ", " << request->fullpath();
 
     ServerUnaryReactor* reactor = context->DefaultReactor();
     reactor->Finish(Status::OK);
@@ -56,6 +57,21 @@ class StorageServiceImpl final : public Storage::CallbackService {
     FUNC_TRACE();
     reply->set_id(request->id());
     reply->set_fullpath(request->fullpath());
+    LOG_INFO() << "FileWrite: " << request->id() << ", " << request->fullpath() << ", " << request->len();
+
+    ServerUnaryReactor* reactor = context->DefaultReactor();
+    reactor->Finish(Status::OK);
+    return reactor;
+  }
+
+  ServerUnaryReactor* FileClose(CallbackServerContext* context,
+                               const FileMetaDataRequest* request,
+                               FileMetaDataReply* reply) override {
+    FUNC_TRACE();
+    reply->set_id(request->id());
+    reply->set_fullpath(request->fullpath());
+
+    LOG_INFO() << "FileClose: " << request->id() << ", " << request->fullpath();
 
     ServerUnaryReactor* reactor = context->DefaultReactor();
     reactor->Finish(Status::OK);

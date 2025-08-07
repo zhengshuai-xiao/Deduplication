@@ -10,6 +10,8 @@ service Storage {
   rpc FileOpen (FileMetaDataRequest) returns (FileMetaDataReply) {}
   // Send data
   rpc FileWrite (FileWriteRequest) returns (FileWriteReply) {}
+  // Close file
+  rpc FileClose (FileMetaDataRequest) returns (FileMetaDataReply) {}
 }
 
 // The request message containing the user's name.
@@ -38,13 +40,13 @@ message FileMetaDataReply {
 
 message FileWriteRequest {
     uint64 id = 1; 
-    string fullPath = 2;
+    string fullpath = 2;
     uint64 offset = 3;
     uint64 len = 4;
     bytes payload = 5;
 }
 message FileWriteReply {
     uint64 id = 1;
-    string fullPath = 2;
+    string fullpath = 2;
     string error = 3;
 }

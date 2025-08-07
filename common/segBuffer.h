@@ -5,7 +5,7 @@
 class SegBuffer:public Buffer{
     public:
         SegBuffer(size_t size):Buffer(size){};
-        virtual ~SegBuffer();
+        virtual ~SegBuffer() = default;
         void calcFP();
         void getFP(fp_t* fp);
     private:

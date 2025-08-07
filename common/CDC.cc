@@ -1,7 +1,7 @@
 #include <random>
 
 #include "CDC.h"
-#include "FixedCDC.h"
+#include "fixedCDC.h"
 
 std::unique_ptr<CDC> CDC::create(
   const std::string& type,

@@ -18,27 +18,27 @@ public:
     BufferQueue(BufferQueue&&) noexcept = default;
     BufferQueue& operator=(BufferQueue&&) noexcept = default;
 
-    void enqueue(Data&& Data) {
+    void enqueue(std::unique_ptr<Data>&& pdata) {
         std::unique_lock<std::mutex> lock(mutex_);
-        if(buffer_queue_.size() >= max_size_){
+        if(buffer_queue_.size() >= max_trunks_){
             std::cout << "hit the upper limiation(" << max_trunks_ << "), waitting" << std::endl;
         }
 
-        not_full_.wait(lock, [this]() { return buffer_queue_.size() < max_size_; });
+        not_full_.wait(lock, [this]() { return buffer_queue_.size() < max_trunks_; });
 
-        buffer_queue_.emplace(std::make_unique<Data>(std::move(Data)));
-        total_size_+=Data.size();
+        total_size_+=pdata->size();
+        buffer_queue_.emplace(std::move(pdata));
 
         not_empty_.notify_one();
     }
 
     void enqueue(size_t size) {
         std::unique_lock<std::mutex> lock(mutex_);
-        if(buffer_queue_.size() >= max_size_){
+        if(buffer_queue_.size() >= max_trunks_){
             std::cout << "hit the upper limiation(" << max_trunks_ << "), waitting" << std::endl;
         }
 
-        not_full_.wait(lock, [this]() { return buffer_queue_.size() < max_size_; });
+        not_full_.wait(lock, [this]() { return buffer_queue_.size() < max_trunks_; });
         
         buffer_queue_.emplace(std::make_unique<Data>(size));
         total_size_+=size;
@@ -46,20 +46,20 @@ public:
         not_empty_.notify_one();
     }
 
-    Data dequeue() {
+    std::unique_ptr<Data> dequeue() {
         std::unique_lock<std::mutex> lock(mutex_);
         if(buffer_queue_.size() == 0){
             std::cout << "there is no data in queue, waitting" << std::endl;
         }
         not_empty_.wait(lock, [this]() { return !buffer_queue_.empty(); });
         
-        auto buffer_ptr = std::move(buffer_queue_.front());
+        std::unique_ptr<Data> buffer_ptr = std::move(buffer_queue_.front());
         buffer_queue_.pop();
         total_size_-= buffer_ptr->size();
         
         not_full_.notify_one();
 
-        return std::move(*buffer_ptr);
+        return std::move(buffer_ptr);
     }
 
     Data& front() {
@@ -68,7 +68,7 @@ public:
         if (is_empty()) {
             throw std::runtime_error("BufferQueue is empty");
         }
-        std::unique_lock<std::mutex> lock(mutex_);
+
         return *buffer_queue_.front();
     }
 

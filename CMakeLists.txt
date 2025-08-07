@@ -14,6 +14,7 @@ endif()
 set(BUILD_SHARED_LIBS ON)
 
 include_directories(${PROJECT_SOURCE_DIR})
+message(STATUS "xzs1: ${PROJECT_SOURCE_DIR}")
 
 find_package(Threads REQUIRED)
 find_package(Protobuf CONFIG REQUIRED)
@@ -21,4 +22,5 @@ find_package(gRPC CONFIG REQUIRED)
 
 add_subdirectory(rpc/grpc)
 add_subdirectory(common)
-add_subdirectory(horsed/src/)
+add_subdirectory(town/src/)
+add_subdirectory(horse)

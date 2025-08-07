@@ -32,7 +32,7 @@ if(TRUE)
   endif()
 endif()
 
-message(STATUS "xzs: ${CMAKE_CURRENT_BINARY_DIR}")
+include_directories(${PROJECT_SOURCE_DIR})
 
 # Proto file
 get_filename_component(hw_proto "protos/storageserver.proto" ABSOLUTE)
@@ -57,7 +57,7 @@ add_custom_command(
 #include_directories(BEFORE  ${PROJECT_SOURCE_DIR}/common)
 #include_directories(BEFORE ${PROJECT_SOURCE_DIR}/include)
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
-#message(STATUS "xzs Include directories: ${PROJECT_SOURCE_DIR}/common ${PROJECT_SOURCE_DIR}/include")
+message(STATUS "xzs Include directories: ${CMAKE_CURRENT_BINARY_DIR}")
 
 # hw_grpc_proto
 add_library(hw_grpc_proto 
@@ -70,19 +70,37 @@ target_link_libraries(hw_grpc_proto
   ${_GRPC_GRPCPP}
   ${_PROTOBUF_LIBPROTOBUF})
 
+add_custom_target(generate_files ALL
+    DEPENDS ${hw_proto_hdrs} ${hw_grpc_hdrs}
+)
+
+add_custom_command(
+    OUTPUT ${DEST_DIR}/output.txt
+    COMMAND ${CMAKE_COMMAND} -E copy ${hw_grpc_hdrs} ${PROJECT_SOURCE_DIR}/include/
+    COMMAND ${CMAKE_COMMAND} -E copy ${hw_proto_hdrs} ${PROJECT_SOURCE_DIR}/include/
+    DEPENDS generate_files  # 关键：等待生成完成后再复制
+    COMMENT "Copying generated file to destination"
+)
+
+add_library(myrpc 
+  "rpc/rpc_server.cc"
+  "rpc/rpc_server.h"
+  "rpc/rpc_client.cc"
+)
+target_link_libraries(myrpc
+  hw_grpc_proto
+  ${_REFLECTION}
+  ${_GRPC_GRPCPP}
+  ${_PROTOBUF_LIBPROTOBUF}
+  common)
+
 # Targets storage_[async_](client|server)
-add_executable(storage_server "rpc/rpc_server.cc")
-target_link_libraries(storage_server
-    hw_grpc_proto
-    ${_REFLECTION}
-    ${_GRPC_GRPCPP}
-    ${_PROTOBUF_LIBPROTOBUF}
+add_executable(downtown "downtown.cc")
+target_link_libraries(downtown
+    myrpc
     common)
 
 add_executable(test_rpc_client "rpc/test_rpc_client.cc")
 target_link_libraries(test_rpc_client
-    hw_grpc_proto
-    ${_REFLECTION}
-    ${_GRPC_GRPCPP}
-    ${_PROTOBUF_LIBPROTOBUF}
+    myrpc
     common)

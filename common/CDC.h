@@ -2,9 +2,9 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
-#include "include/types.h"
-#include "include/buffer.h"
+#include "buffer.h"
 
 class CDC {
 public:
@@ -14,9 +14,9 @@ public:
      0: did not hit the buffer boundary
      -1: hit the buffer boundary
   */
-  int calc_chunks(const char* const data,
+  virtual int calc_chunks(const char* const data,
   const size_t size,
-  uint64_t &chunk_offset) const = 0;
+  uint64_t &chunk_offset) = 0;
 
   /// set target chunk size as a power of 2, and number of bits for hard min/max
   virtual void set_target_bits(int bits, int windowbits = 2) = 0;
@@ -27,4 +27,4 @@ public:
     int windowbits = 0);
 };
 
-void generate_buffer(int size, bufferlist *outbl, int seed = 0);
+//void generate_buffer(int size, bufferlist *outbl, int seed = 0);

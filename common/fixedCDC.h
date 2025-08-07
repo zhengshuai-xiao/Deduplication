@@ -16,5 +16,5 @@ public:
   }
   int calc_chunks(const char* const data,
   const size_t size,
-  uint64_t &chunk_offset) const override;
+  uint64_t &chunk_offset) override;
 };
