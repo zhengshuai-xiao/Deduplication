@@ -9,6 +9,24 @@
 #include <thread>
 #include "include/rpc_client.h"
 #include "include/common.h"
+
+struct horse_config {
+    std::string server_address;
+    int timeout;
+    std::string log_level;
+    std::string log_path;
+};
+
+horse_config horse_cfg;
+
+void config_init(const std::string cfg_path) {
+    ConfigManager::Instance().LoadFromJson(cfg_path);
+    horse_cfg.server_address = ConfigManager::Instance().Get<std::string>("server.address", "0.0.0.0:50051");
+    horse_cfg.timeout = ConfigManager::Instance().Get<int>("server.timeout", 30);
+    horse_cfg.log_level = ConfigManager::Instance().Get<std::string>("log.level", "info");
+    horse_cfg.log_path = ConfigManager::Instance().Get<std::string>("log.path", "/var/log/horse.log");
+}
+
 std::atomic<bool> finished=false;
 
 const size_t BUF_SIZE = 2 * 1024 * 1024;  // 2M
@@ -101,7 +119,12 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    const std::string target_str = "localhost:50051";
+    //TODO: get the server address from config file
+    config_init("/workspace/Deduplication/config/horse.cfg.json");
+    const std::string target_str = horse_cfg.server_address;
+    //init logger
+    common::Logger::Instance().setLogFile(horse_cfg.log_path, false);
+    common::Logger::Instance().setLevel(horse_cfg.log_level);
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -119,7 +142,10 @@ int main(int argc, char* argv[]) {
             std::unique_ptr<SegBuffer> bufferPtr = buffer_queue.dequeue();
             if (bufferPtr->size() > 0) {
                 // TODO:Send buffer to server
-                client.FileWrite(file_path,bufferPtr->data(),bufferPtr->size());
+                if(client.FileWrite(file_path,bufferPtr->data(),bufferPtr->size())==0){
+                    LOG_ERROR() << "failed to write buffer to server, exit";
+                    return;
+                }
             }
         }
         client.FileClose(file_path);

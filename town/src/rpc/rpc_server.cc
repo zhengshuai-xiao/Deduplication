@@ -80,8 +80,7 @@ class StorageServiceImpl final : public Storage::CallbackService {
 
 };
 
-void RunServer() {
-    std::string server_address("0.0.0.0:50051");
+void RunServer(std::string server_address) {
     StorageServiceImpl service;
 
     grpc::EnableDefaultHealthCheckService(true);

@@ -12,5 +12,5 @@ find_package(Threads REQUIRED)
 
 
 add_library(common 
-logger.cc CDC.cc fixedCDC.cc segBuffer.cc)
+logger.cc CDC.cc fixedCDC.cc segBuffer.cc configMgr.cc)
 target_link_libraries(common pthread)

@@ -10,6 +10,7 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <unordered_map>
 
 namespace common {
 
@@ -23,6 +24,7 @@ public:
     static Logger& Instance();
 
     void setLogFile(const std::string& filename, bool async = false);
+    void setLevel(std::string level_str);
     void setLevel(LogLevel level);
     void stop();
 

@@ -1,6 +1,18 @@
 #include "logger.h"
+#include <algorithm>
+
+
 
 namespace common {
+
+std::unordered_map<std::string, LogLevel> LogLevelMap = {
+    {"TRACE", LogLevel::TRACE},
+    {"DBG", LogLevel::DBG},
+    {"INFO", LogLevel::INFO},
+    {"WARN", LogLevel::WARN},
+    {"ERROR", LogLevel::ERROR},
+    {"FATAL", LogLevel::FATAL}
+};
 
 Logger& Logger::Instance() {
     static Logger inst;
@@ -26,6 +38,17 @@ void Logger::setLogFile(const std::string& filename, bool async) {
     }
 }
 
+void Logger::setLevel(std::string level_str){
+    std::transform(level_str.begin(), level_str.end(), level_str.begin(), ::toupper);
+    auto it = LogLevelMap.find(level_str);
+    if (it != LogLevelMap.end()) {
+        setLevel(it->second);
+    } else {
+        // Handle invalid log level
+        setLevel(LogLevel::INFO);
+        LOG_WARN() << "Invalid log level: " << level_str;
+    }
+}
 void Logger::setLevel(LogLevel level) {
     min_level_ = level;
 }

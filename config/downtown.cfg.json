@@ -1,0 +1,14 @@
+{
+    "app": {
+        "name": "downtown",
+        "version": 1.0
+    },
+    "log": {
+        "level": "INFO",
+        "file": "/var/log/downtown.log"
+    },
+    "server": {
+        "address": "0.0.0.0:50051",
+        "timeout": 30
+    }
+}
