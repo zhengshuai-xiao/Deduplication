@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <mutex>
 #include <condition_variable>
+#include "logger.h"
 
 template<class Data>
 class BufferQueue {
@@ -21,7 +22,7 @@ public:
     void enqueue(std::unique_ptr<Data>&& pdata) {
         std::unique_lock<std::mutex> lock(mutex_);
         if(buffer_queue_.size() >= max_trunks_){
-            std::cout << "hit the upper limiation(" << max_trunks_ << "), waitting" << std::endl;
+            LOG_TRACE() << "hit the upper limiation(" << max_trunks_ << "), waitting";
         }
 
         not_full_.wait(lock, [this]() { return buffer_queue_.size() < max_trunks_; });
@@ -49,7 +50,7 @@ public:
     std::unique_ptr<Data> dequeue() {
         std::unique_lock<std::mutex> lock(mutex_);
         if(buffer_queue_.size() == 0){
-            std::cout << "there is no data in queue, waitting" << std::endl;
+            LOG_TRACE() << "there is no data in queue, waitting";
         }
         not_empty_.wait(lock, [this]() { return !buffer_queue_.empty(); });
         
@@ -66,6 +67,7 @@ public:
         std::unique_lock<std::mutex> lock(mutex_);
 
         if (is_empty()) {
+            LOG_ERROR() << "BufferQueue is empty";
             throw std::runtime_error("BufferQueue is empty");
         }
 
@@ -76,6 +78,7 @@ public:
         std::unique_lock<std::mutex> lock(mutex_);
 
         if (is_empty()) {
+            LOG_ERROR() << "BufferQueue is empty";
             throw std::runtime_error("BufferQueue is empty");
         }
         return *buffer_queue_.front();
@@ -86,6 +89,7 @@ public:
         std::unique_lock<std::mutex> lock(mutex_);
 
         if (is_empty()) {
+            LOG_ERROR() << "BufferQueue is empty";
             throw std::runtime_error("BufferQueue is empty");
         }
         return *buffer_queue_.back();
@@ -96,6 +100,7 @@ public:
         std::unique_lock<std::mutex> lock(mutex_);
 
         if (is_empty()) {
+            LOG_ERROR() << "BufferQueue is empty";
             throw std::runtime_error("BufferQueue is empty");
         }
         return *buffer_queue_.back();

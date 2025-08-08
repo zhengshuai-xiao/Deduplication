@@ -62,7 +62,8 @@ private:
     std::thread thread_;
     std::atomic<bool> running_{false};
     bool async_{false};
-    LogLevel min_level_{LogLevel::TRACE};
+    //TODO: put the default value to config file
+    LogLevel min_level_{LogLevel::INFO};
 };
 
 // 宏定义，自动带上文件、行号、函数名

@@ -30,11 +30,11 @@ struct readBuf{
         return size - offset;
     }
 };
-bool read_file_to_buffer_queue(const std::string& file_path, BufferQueue<SegBuffer>& buffer_queue) {
+size_t read_file_to_buffer_queue(const std::string& file_path, BufferQueue<SegBuffer>& buffer_queue) {
     std::ifstream file(file_path, std::ios::binary);
     if (!file.is_open()) {
         LOG_ERROR() << "cannot open file: " << file_path ;
-        return false;
+        return 0;
     }
     //TODO:ring buffer
     readBuf read_buffer;
@@ -58,7 +58,7 @@ bool read_file_to_buffer_queue(const std::string& file_path, BufferQueue<SegBuff
         while(!finish_cut){
             uint64_t chunk_size = 0;
             if(cdc->calc_chunks(read_buffer.data(), read_buffer.remaining(), chunk_size) == -1){
-                LOG_INFO() << "hit boundary";
+                LOG_TRACE() << "hit boundary";
                 if(chunk_size == 0){
                     break;
                 }
@@ -76,7 +76,7 @@ bool read_file_to_buffer_queue(const std::string& file_path, BufferQueue<SegBuff
         total_read += static_cast<size_t>(bytes_read);
         
         if (chunks_read % 10 == 0) {
-            LOG_INFO() << "read: " << chunks_read << " chunks, total is " << total_read / 1024.0 << " KB" ;
+            LOG_TRACE() << "read: " << chunks_read << " chunks, total is " << total_read / 1024.0 << " KB" ;
         }
     }
     finished.store(true);
@@ -86,7 +86,7 @@ bool read_file_to_buffer_queue(const std::string& file_path, BufferQueue<SegBuff
     LOG_INFO() << "read finished. Total " << chunks_read << " chunks, " << total_read / 1024.0 << " KB";
     LOG_INFO() << "buffer queue currently contains " << buffer_queue.size() << " chunks" ;
     
-    return true;
+    return total_read;
 }
 
 void display_queue_info(const BufferQueue<SegBuffer>& buffer_queue) {
@@ -103,8 +103,11 @@ int main(int argc, char* argv[]) {
 
     const std::string target_str = "localhost:50051";
 
+    auto start_time = std::chrono::high_resolution_clock::now();
+
     std::string file_path = argv[1];
-    BufferQueue<SegBuffer> buffer_queue;
+    BufferQueue<SegBuffer> buffer_queue(100);
+    size_t total_read=0; 
 
     //TODO: create another thread to send the segment to server
     std::thread sender_thread([&buffer_queue, target_str]() {
@@ -123,7 +126,8 @@ int main(int argc, char* argv[]) {
     });
 
     try {
-        if (!read_file_to_buffer_queue(file_path, buffer_queue)) {
+        if ((total_read=read_file_to_buffer_queue(file_path, buffer_queue)) == 0) {
+            LOG_ERROR() << "failed to read file to buffer queue";
             return 1;
         }
 
@@ -135,6 +139,14 @@ int main(int argc, char* argv[]) {
         LOG_ERROR() << "error happened: " << e.what() ;
         return 1;
     }
+    auto end_time = std::chrono::high_resolution_clock::now();
+    double test_duration_sec = std::chrono::duration<double>(
+        end_time - start_time
+    ).count();
+
+    double bandwidth_mb=(total_read/(1024.0 * 1024.0))/test_duration_sec;
+    LOG_INFO() << "test duration: " << test_duration_sec << " seconds";
+    LOG_INFO() << "bandwidth: " << bandwidth_mb << " MB/s";
 
     return 0;
 }

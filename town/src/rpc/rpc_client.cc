@@ -29,16 +29,15 @@ std::string StorageClient::SayHello(const std::string& user) {
 
     std::unique_lock<std::mutex> lock(mu);
     while (!done) {
-    cv.wait(lock);
+        cv.wait(lock);
     }
 
     // Act upon its status.
     if (status.ok()) {
-    return reply.message();
+        return reply.message();
     } else {
-    std::cout << status.error_code() << ": " << status.error_message()
-                << std::endl;
-    return "RPC failed";
+        LOG_ERROR() << status.error_code() << ": " << status.error_message();
+        return "RPC failed";
     }
 }
 int StorageClient::FileOpen(const std::string path, int mode){
@@ -48,10 +47,10 @@ int StorageClient::FileOpen(const std::string path, int mode){
     ClientContext context;
     Status status = stub_->FileOpen(&context, request, &reply);
     if (status.ok()) {
-        std::cout << "FileOpen succeeded: " << reply.fullpath() << std::endl;
+        LOG_TRACE() << "FileOpen succeeded: " << reply.fullpath();
         return 0;
     } else {
-        std::cout << "FileOpen failed: " << status.error_message() << std::endl;
+        LOG_ERROR() << "FileOpen failed: " << status.error_message();
         return -1;
     }
 }
@@ -66,9 +65,9 @@ size_t StorageClient::FileWrite(const std::string path, const char* data, size_t
 
     Status status = stub_->FileWrite(&context, request, &reply);
     if (status.ok()) {
-        std::cout << "FileWrite succeeded: " << reply.fullpath() << std::endl;
+        LOG_TRACE() << "FileWrite succeeded: " << reply.fullpath();
     } else {
-        std::cout << "FileWrite failed: " << status.error_message() << std::endl;
+        LOG_ERROR() << "FileWrite failed: " << status.error_message();
     }
     return size;
 }
@@ -80,10 +79,10 @@ int StorageClient::FileClose(const std::string path){
     ClientContext context;
     Status status = stub_->FileClose(&context, request, &reply);
     if (status.ok()) {
-        std::cout << "FileClose succeeded: " << reply.fullpath() << std::endl;
+        LOG_TRACE() << "FileClose succeeded: " << reply.fullpath();
         return 0;
     } else {
-        std::cout << "FileClose failed: " << status.error_message() << std::endl;
+        LOG_ERROR() << "FileClose failed: " << status.error_message();
         return -1;
     }
 }
