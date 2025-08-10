@@ -1066,8 +1066,9 @@ class FileWriteReply final :
 
   enum : int {
     kFullpathFieldNumber = 2,
-    kErrorFieldNumber = 3,
+    kErrorFieldNumber = 4,
     kIdFieldNumber = 1,
+    kLenFieldNumber = 3,
   };
   // string fullpath = 2;
   void clear_fullpath();
@@ -1083,7 +1084,7 @@ class FileWriteReply final :
   std::string* _internal_mutable_fullpath();
   public:
 
-  // string error = 3;
+  // string error = 4;
   void clear_error();
   const std::string& error() const;
   template <typename ArgT0 = const std::string&, typename... ArgT>
@@ -1106,6 +1107,15 @@ class FileWriteReply final :
   void _internal_set_id(uint64_t value);
   public:
 
+  // uint64 len = 3;
+  void clear_len();
+  uint64_t len() const;
+  void set_len(uint64_t value);
+  private:
+  uint64_t _internal_len() const;
+  void _internal_set_len(uint64_t value);
+  public:
+
   // @@protoc_insertion_point(class_scope:storageserver.FileWriteReply)
  private:
   class _Internal;
@@ -1117,6 +1127,7 @@ class FileWriteReply final :
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr fullpath_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr error_;
     uint64_t id_;
+    uint64_t len_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -1723,7 +1734,27 @@ inline void FileWriteReply::set_allocated_fullpath(std::string* fullpath) {
   // @@protoc_insertion_point(field_set_allocated:storageserver.FileWriteReply.fullpath)
 }
 
-// string error = 3;
+// uint64 len = 3;
+inline void FileWriteReply::clear_len() {
+  _impl_.len_ = uint64_t{0u};
+}
+inline uint64_t FileWriteReply::_internal_len() const {
+  return _impl_.len_;
+}
+inline uint64_t FileWriteReply::len() const {
+  // @@protoc_insertion_point(field_get:storageserver.FileWriteReply.len)
+  return _internal_len();
+}
+inline void FileWriteReply::_internal_set_len(uint64_t value) {
+  
+  _impl_.len_ = value;
+}
+inline void FileWriteReply::set_len(uint64_t value) {
+  _internal_set_len(value);
+  // @@protoc_insertion_point(field_set:storageserver.FileWriteReply.len)
+}
+
+// string error = 4;
 inline void FileWriteReply::clear_error() {
   _impl_.error_.ClearToEmpty();
 }

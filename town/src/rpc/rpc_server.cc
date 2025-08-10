@@ -57,6 +57,7 @@ class StorageServiceImpl final : public Storage::CallbackService {
     FUNC_TRACE();
     reply->set_id(request->id());
     reply->set_fullpath(request->fullpath());
+    reply->set_len(request->len());
     LOG_TRACE() << "FileWrite: " << request->id() << ", " << request->fullpath() << ", " << request->len();
 
     ServerUnaryReactor* reactor = context->DefaultReactor();

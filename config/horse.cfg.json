@@ -7,6 +7,9 @@
         "level": "INFO",
         "file": "/var/log/horse.log"
     },
+    "client": {
+        "async": false
+    },
     "server": {
         "address": "0.0.0.0:50051",
         "timeout": 30

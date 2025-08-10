@@ -69,7 +69,7 @@ size_t StorageClient::FileWrite(const std::string path, const char* data, size_t
     } else {
         LOG_ERROR() << "FileWrite failed: " << status.error_message();
     }
-    return size;
+    return reply.len();
 }
 
 int StorageClient::FileClose(const std::string path){

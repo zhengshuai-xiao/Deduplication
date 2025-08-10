@@ -48,5 +48,6 @@ message FileWriteRequest {
 message FileWriteReply {
     uint64 id = 1;
     string fullpath = 2;
-    string error = 3;
+    uint64 len = 3;
+    string error = 4;
 }

@@ -51,7 +51,11 @@ add_custom_command(
         -I "${hw_proto_path}"
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
         "${hw_proto}"
-      DEPENDS "${hw_proto}")
+      COMMAND ${CMAKE_COMMAND} -E copy ${hw_grpc_hdrs} ${PROJECT_SOURCE_DIR}/include/storageserver.grpc.pb.h
+      COMMAND ${CMAKE_COMMAND} -E copy ${hw_proto_hdrs} ${PROJECT_SOURCE_DIR}/include/storageserver.pb.h
+      DEPENDS "${hw_proto}"
+      COMMENT "generate protoc files, and copy hdr to include directories"
+      )
 
 # Include generated *.pb.h files
 #include_directories(BEFORE  ${PROJECT_SOURCE_DIR}/common)
@@ -62,31 +66,18 @@ message(STATUS "xzs Include directories: ${CMAKE_CURRENT_BINARY_DIR}")
 # hw_grpc_proto
 add_library(hw_grpc_proto 
   ${hw_grpc_srcs}
-  ${hw_grpc_hdrs}
-  ${hw_proto_srcs}
-  ${hw_proto_hdrs})
+  ${hw_proto_srcs})
 target_link_libraries(hw_grpc_proto
   ${_REFLECTION}
   ${_GRPC_GRPCPP}
   ${_PROTOBUF_LIBPROTOBUF})
-
-add_custom_target(generate_files ALL
-    DEPENDS ${hw_proto_hdrs} ${hw_grpc_hdrs}
-)
-
-add_custom_command(
-    OUTPUT ${DEST_DIR}/output.txt
-    COMMAND ${CMAKE_COMMAND} -E copy ${hw_grpc_hdrs} ${PROJECT_SOURCE_DIR}/include/
-    COMMAND ${CMAKE_COMMAND} -E copy ${hw_proto_hdrs} ${PROJECT_SOURCE_DIR}/include/
-    DEPENDS generate_files  # 关键：等待生成完成后再复制
-    COMMENT "Copying generated file to destination"
-)
 
 add_library(myrpc 
   "rpc/rpc_server.cc"
   "rpc/rpc_server.h"
   "rpc/rpc_client.cc"
 )
+
 target_link_libraries(myrpc
   hw_grpc_proto
   ${_REFLECTION}
